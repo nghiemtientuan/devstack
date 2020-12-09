@@ -285,7 +285,7 @@ restore:  ## Restore all data volumes from the host. WARNING: THIS WILL OVERWRIT
 	docker-compose $(DOCKER_COMPOSE_FILES) exec $* /bin/bash
 
 analyticspipeline-shell: ## Run a shell on the analytics pipeline container
-	docker-compose $(DOCKER_COMPOSE_FILES) exec analytics_pipeline env TERM=$(TERM) /edx/app/analytics_pipeline/devstack.sh open
+	docker-compose $(DOCKER_COMPOSE_FILES) exec analyticspipeline env TERM=$(TERM) /edx/app/analytics_pipeline/devstack.sh open
 
 credentials-shell: ## Run a shell on the credentials container
 	docker-compose $(DOCKER_COMPOSE_FILES) exec credentials env TERM=$(TERM) bash -c 'source /edx/app/credentials/credentials_env && cd /edx/app/credentials/credentials && /bin/bash'
@@ -403,7 +403,7 @@ dev.up.analytics_pipeline: dev.up.analyticspipeline ## Bring up analytics pipeli
 pull.analytics_pipeline: dev.pull.analyticspipeline ## Update analytics pipeline docker images
 
 analytics-pipeline-devstack-test: ## Run analytics pipeline tests in travis build
-	docker-compose $(DOCKER_COMPOSE_FILES) exec -u hadoop -T analytics_pipeline bash -c 'sudo chown -R hadoop:hadoop /edx/app/analytics_pipeline && source /edx/app/hadoop/.bashrc && make develop-local && make docker-test-acceptance-local ONLY_TESTS=edx.analytics.tasks.tests.acceptance.test_internal_reporting_database && make docker-test-acceptance-local ONLY_TESTS=edx.analytics.tasks.tests.acceptance.test_user_activity'
+	docker-compose $(DOCKER_COMPOSE_FILES) exec -u hadoop -T analyticspipeline bash -c 'sudo chown -R hadoop:hadoop /edx/app/analytics_pipeline && source /edx/app/hadoop/.bashrc && make develop-local && make docker-test-acceptance-local ONLY_TESTS=edx.analytics.tasks.tests.acceptance.test_internal_reporting_database && make docker-test-acceptance-local ONLY_TESTS=edx.analytics.tasks.tests.acceptance.test_user_activity'
 
 stop.analytics_pipeline: ## Stop all Analytics pipeline services.
 	docker-compose $(DOCKER_COMPOSE_FILES) stop \
@@ -411,7 +411,7 @@ stop.analytics_pipeline: ## Stop all Analytics pipeline services.
 		sparkworker vertica analyticspipeline
 
 hadoop-application-logs-%: ## View hadoop logs by application Id
-	docker-compose $(DOCKER_COMPOSE_FILES) exec analytics_pipeline.nodemanager yarn logs -applicationId $*
+	docker-compose $(DOCKER_COMPOSE_FILES) exec analyticspipeline.nodemanager yarn logs -applicationId $*
 
 # Provisions studio, ecommerce, and marketing with course(s) in test-course.json
 # Modify test-course.json before running this make target to generate a custom course
@@ -436,3 +436,4 @@ feature-toggle-state: ## Gather the state of feature toggles configured for vari
 
 selfcheck: ## check that the Makefile is well-formed
 	@echo "The Makefile is well-formed."
+

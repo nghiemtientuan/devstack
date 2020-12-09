@@ -39,7 +39,7 @@ fi
 
 echo -e "${GREEN}LMS database provisioned successfully...${NC}"
 echo -e "${GREEN}Creating databases and users...${NC}"
-docker-compose $DOCKER_COMPOSE_FILES exec mysql bash -c 'mysql -uroot mysql' < provision-analytics-pipeline.sql
+docker-compose $DOCKER_COMPOSE_FILES exec -T mysql bash -c 'mysql -uroot mysql' < provision-analytics-pipeline.sql
 
 # initialize hive metastore
 echo -e "${GREEN}Initializing HIVE metastore...${NC}"
@@ -56,4 +56,5 @@ done
 sleep 10 # for datanode & other services to activate
 echo -e "${GREEN}Namenode is ready!${NC}"
 
-docker-compose $DOCKER_COMPOSE_FILES exec -u hadoop analytics_pipeline bash -c 'sudo /edx/app/hadoop/hadoop/bin/hdfs dfs -chown -R hadoop:hadoop hdfs://namenode:8020/; hdfs dfs -mkdir -p hdfs://namenode:8020/edx-analytics-pipeline/{warehouse,marker,manifest,packages} hdfs://namenode:8020/{spark-warehouse,data} hdfs://namenode:8020/tmp/spark-events;hdfs dfs -copyFromLocal -f /edx/app/hadoop/lib/edx-analytics-hadoop-util.jar hdfs://namenode:8020/edx-analytics-pipeline/packages/;'
+docker-compose $DOCKER_COMPOSE_FILES exec -u hadoop analyticspipeline bash -c 'sudo /edx/app/hadoop/hadoop/bin/hdfs dfs -chown -R hadoop:hadoop hdfs://namenode:8020/; hdfs dfs -mkdir -p hdfs://namenode:8020/edx-analytics-pipeline/{warehouse,marker,manifest,packages} hdfs://namenode:8020/{spark-warehouse,data} hdfs://namenode:8020/tmp/spark-events;hdfs dfs -copyFromLocal -f /edx/app/hadoop/lib/edx-analytics-hadoop-util.jar hdfs://namenode:8020/edx-analytics-pipeline/packages/;'
+

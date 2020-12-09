@@ -27,18 +27,6 @@ It also includes the following extra components:
 * The Program Console micro-frontend
 * edX Registrar service.
 
-Where to Find Help
-------------------
-
-There are a number of places to get help, including mailing lists and real-time chat. Please choose an appropriate venue for your question. This helps ensure that you get good prompt advice, and keeps discussion focused. For details of your options, see the `Community`_ pages.
-
-FYI
----
-
-You should run all ``make`` commands described below on your local machine, *not*
-from within a VM (virtualenvs are ok, and in fact recommended) as these commands
-are for standing up a new docker based VM.
-
 Prerequisites
 -------------
 
@@ -73,151 +61,195 @@ If you are using Linux, use the ``overlay2`` storage driver, kernel version
 
    docker info | grep -i 'storage driver'
 
-Using the Latest Images
------------------------
-
-New images for our services are published frequently.  Assuming that you've followed the steps in `Getting Started`_
-below, run the following sequence of commands if you want to use the most up-to-date versions of the devstack images.
-
-.. code:: sh
-
-    make down
-    make dev.pull
-    make dev.up
-
-This will stop any running devstack containers, pull the latest images, and then start all of the devstack containers.
-
-Getting Started
+Getting Started (Base)
 ---------------
 
 All of the services can be run by following the steps below. For analyticstack, follow `Getting Started on Analytics`_.
 
-1. Install the requirements inside of a `Python virtualenv`_.
+1. Going to folder that include OpenEdx resources (Example: /root/user/edx):
+
+2. Clone custom devstack repo:
+
+    .. code:: sh
+
+       git clone https://github.com/nghiemtientuan/devstack.git
+
+3. Going to folder devstack:
+
+    .. code:: sh
+
+       cd devstack
+
+4. Set OPENEDX_RELEASE param global:
+
+    .. code:: sh
+
+       export OPENEDX_RELEASE=juniper.master
+
+5. Checkout branch OPENEDX_RELEASE:
+
+    .. code:: sh
+
+       git checkout open-release/$OPENEDX_RELEASE
+
+6. Install the requirements inside of a `Python virtualenv`_ (recommend)
+    .. code:: sh
+
+        pip install virtualenv
+        virtualenv venv
+        virtualenv -p python3 venv
+        source venv/bin/activate
 
    .. code:: sh
 
-       make requirements
+        make requirements
 
    This will install docker-compose and other utilities into your virtualenv.
 
-2. The Docker Compose file mounts a host volume for each service's executing
-   code. The host directory defaults to be a sibling of this directory. For
-   example, if this repo is cloned to ``~/workspace/devstack``, host volumes
-   will be expected in ``~/workspace/course-discovery``,
-   ``~/workspace/ecommerce``, etc. These repos can be cloned with the command
-   below.
+    If you are done working in the virtual environment for the moment, you can deactivate it:
+    .. code:: sh
+
+        deactivate
+
+7. The Docker Compose file mounts a host volume for each service's executing code. The host directory defaults to be a sibling of this directory. Run following command to clone basic repos.
 
    .. code:: sh
 
-       make dev.clone  # or, `make dev.clone.ssh` if you have SSH keys set up.
+       make dev.clone https
 
-   You may customize where the local repositories are found by setting the
-   DEVSTACK\_WORKSPACE environment variable.
-
-   (macOS only) Share the cloned service directories in Docker, using
-   **Docker -> Preferences -> File Sharing** in the Docker menu.
-
-3. Pull any changes made to the various images on which the devstack depends.
+8. Pull any changes made to the various images on which the devstack depends.
 
    .. code:: sh
 
        make dev.pull
 
-3. (Optional) You have an option to use nfs on MacOS which will improve the performance significantly, to set it up ONLY ON MAC, do
-    .. code:: sh
-
-        make dev.nfs.setup
-
-
-4. Run the provision command, if you haven't already, to configure the various
-   services with superusers (for development without the auth service) and
-   tenants (for multi-tenancy).
-
-   **NOTE:** When running the provision command, databases for ecommerce and edxapp
-   will be dropped and recreated.
+9. Run the provision command
 
    The username and password for the superusers are both ``edx``. You can access
    the services directly via Django admin at the ``/admin/`` path, or login via
    single sign-on at ``/login/``.
 
-   Default:
-
    .. code:: sh
 
        make dev.provision
 
-   Provision using `docker-sync`_:
-
-   .. code:: sh
-
-       make dev.sync.provision
-
-     Provision using NFS:
-
-   .. code:: sh
-
-       make dev.nfs.provision
-
    This is expected to take a while, produce a lot of output from a bunch of steps, and finally end with ``Provisioning complete!``
 
-5. Start the services. This command will mount the repositories under the
-   DEVSTACK\_WORKSPACE directory.
+10. Start the services. This command will mount the repositories
 
    **NOTE:** it may take up to 60 seconds for the LMS to start, even after the ``make dev.up`` command outputs ``done``.
-
-   Default:
 
    .. code:: sh
 
        make dev.up
 
-   Start using `docker-sync`_:
+11. Done! Setup Successfully
+
+Getting Started on Analytics
+----------------------------
+
+Analyticstack can be run by following the steps below.
+
+1. Follow steps `1` to `10` from `Getting Started`_ section.
+
+2. Before running the provision command, make sure to pull the relevant
+   docker images from dockerhub by running the following commands:
 
    .. code:: sh
 
-       make dev.sync.up
+       make pull.analytics_pipeline
 
-   Start using NFS:
+3. Run the provision command to configure the analyticstack.
 
    .. code:: sh
 
-       make dev.nfs.up
+       make dev.provision.analytics_pipeline
 
+4. Start the analytics service. This command will mount the repositories under the
+   DEVSTACK\_WORKSPACE directory.
 
-After the services have started, if you need shell access to one of the
+   **NOTE:** it may take up to 60 seconds for Hadoop services to start.
+
+   .. code:: sh
+
+       make dev.up.analytics_pipeline
+
+5. Done! Setup Successfully
+
+Useful Commands
+----------------------------
+- To access the analytics pipeline shell, run the following command. All analytics
+pipeline job/workflows should be executed after accessing the shell.
+
+    .. code:: sh
+
+        make analytics-pipeline-shell
+
+- To see logs from containers running in detached mode, you can either use
+"Kitematic" (available from the "Docker for Mac" menu), or by running the
+following command:
+
+    .. code:: sh
+
+        make logs
+
+- To view the logs of a specific service container run ``make <service>-logs``.
+For example, to access the logs for Hadoop's namenode, you can run:
+
+    .. code:: sh
+
+        make namenode-logs
+
+- To reset your environment and start provisioning from scratch, you can run:
+
+    .. code:: sh
+
+        make destroy
+
+ **NOTE:** Be warned! This will remove all the containers and volumes
+ initiated by this repository and all the data ( in these docker containers )
+ will be lost.
+
+- For information on all the available ``make`` commands, you can run:
+
+    .. code:: sh
+
+        make help
+
+- After the services have started, if you need shell access to one of the
 services, run ``make <service>-shell``. For example to access the
 Catalog/Course Discovery Service, you can run:
 
-.. code:: sh
+    .. code:: sh
 
-    make discovery-shell
+        make discovery-shell
 
-To see logs from containers running in detached mode, you can either use
+- To see logs from containers running in detached mode, you can either use
 "Kitematic" (available from the "Docker for Mac" menu), or by running the
 following:
 
-.. code:: sh
+    .. code:: sh
 
-    make logs
+        make logs
 
-To view the logs of a specific service container run ``make <service>-logs``.
+- To view the logs of a specific service container run ``make <service>-logs``.
 For example, to access the logs for Ecommerce, you can run:
 
-.. code:: sh
+    .. code:: sh
 
-    make ecommerce-logs
+        make ecommerce-logs
 
-To reset your environment and start provisioning from scratch, you can run:
+- To reset your environment and start provisioning from scratch, you can run:
 
-.. code:: sh
+    .. code:: sh
 
-    make destroy
+        make destroy
 
-For information on all the available ``make`` commands, you can run:
+- For information on all the available ``make`` commands, you can run:
 
-.. code:: sh
+    .. code:: sh
 
-    make help
+        make help
 
 Usernames and Passwords
 -----------------------
@@ -256,11 +288,6 @@ is ``edx``.
 
 Service List
 ------------
-
-These are the edX services that Devstack can provision, pull, run, attach to, etc.
-Each service is accessible at ``localhost`` on a specific port.
-The table below provides links to the homepage, API root, or API docs of each service,
-as well as links to the repository where each service's code lives.
 
 The services marked as ``Default`` are provisioned/pulled/run whenever you run
 ``make dev.provision`` / ``make dev.pull`` / ``make dev.up``, respectively.
@@ -316,398 +343,8 @@ The extra services are provisioned/pulled/run when specifically requested (e.g.,
 .. _marketing: https://github.com/edx/edx-mktg
 .. _xqueue: https://github.com/edx/xqueue
 
-Getting Started on Analytics
-----------------------------
-
-Analyticstack can be run by following the steps below.
-
-**NOTE:** Since a Docker-based devstack runs many containers, you should configure
-Docker with a sufficient amount of resources. We find that
-`configuring Docker for Mac`_ with a minimum of 2 CPUs and 6GB of memory works
-well for **analyticstack**. If you intend on running other docker services besides
-analyticstack ( e.g. lms, studio etc ) consider setting higher memory.
-
-1. Follow steps `1` and `2` from `Getting Started`_ section.
-
-2. Before running the provision command, make sure to pull the relevant
-   docker images from dockerhub by running the following commands:
-
-   .. code:: sh
-
-       make dev.pull
-       make pull.analytics_pipeline
-
-3. Run the provision command to configure the analyticstack.
-
-   .. code:: sh
-
-       make dev.provision.analytics_pipeline
-
-4. Start the analytics service. This command will mount the repositories under the
-   DEVSTACK\_WORKSPACE directory.
-
-   **NOTE:** it may take up to 60 seconds for Hadoop services to start.
-
-   .. code:: sh
-
-       make dev.up.analytics_pipeline
-
-5. To access the analytics pipeline shell, run the following command. All analytics
-   pipeline job/workflows should be executed after accessing the shell.
-
-   .. code:: sh
-
-     make analytics-pipeline-shell
-
-   - To see logs from containers running in detached mode, you can either use
-     "Kitematic" (available from the "Docker for Mac" menu), or by running the
-     following command:
-
-      .. code:: sh
-
-        make logs
-
-   - To view the logs of a specific service container run ``make <service>-logs``.
-     For example, to access the logs for Hadoop's namenode, you can run:
-
-      .. code:: sh
-
-        make namenode-logs
-
-   - To reset your environment and start provisioning from scratch, you can run:
-
-      .. code:: sh
-
-        make destroy
-
-     **NOTE:** Be warned! This will remove all the containers and volumes
-     initiated by this repository and all the data ( in these docker containers )
-     will be lost.
-
-   - For information on all the available ``make`` commands, you can run:
-
-      .. code:: sh
-
-        make help
-
-6. For running acceptance tests on docker analyticstack, follow the instructions in the
-   `Running analytics acceptance tests in docker`_ guide.
-7. For troubleshooting docker analyticstack, follow the instructions in the
-   `Troubleshooting docker analyticstack`_ guide.
-
-Useful Commands
----------------
-
-``make dev.up`` can take a long time, as it starts all services, whether or not
-you need them. To instead only start a single service and its dependencies, run
-``make dev.up.<service>``. For example, the following will bring up LMS
-(along with Memcached, MySQL, and devpi), but it will not bring up Discovery,
-Credentials, etc:
-
-.. code:: sh
-
-    make dev.up.lms
-
-Similarly, ``make dev.pull`` can take a long time, as it pulls all services' images,
-whether or not you need them.
-To instead only pull images required by your service and its dependencies,
-run ``make dev.pull.<service>``.
-
-Finally, ``make dev.provision.services.<service1>+<service2>+...``
-can be used in place of ``make dev.provision`` in order to run an expedited version of
-provisioning for a specific set of services.
-For example, if you mess up just your
-Course Discovery and Registrar databases,
-running ``make dev.provision.services.discovery+registrar``
-will take much less time than the full provisioning process.
-However, note that some services' provisioning processes depend on other services
-already being correcty provisioned.
-So, when in doubt, it may still be best to run the full ``make dev.provision``.
-
-Sometimes you may need to restart a particular application server. To do so,
-simply use the ``docker-compose restart`` command:
-
-.. code:: sh
-
-    docker-compose restart <service>
-
-In all the above commands, ``<service>`` should be replaced with one of the following:
-
--  credentials
--  discovery
--  ecommerce
--  lms
--  edx_notes_api
--  studio
--  registrar
--  gradebook
--  program-console
--  frontend-app-learning
--  frontend-app-publisher
-
-If you'd like to add some convenience make targets, you can add them to a ``local.mk`` file, ignored by git.
-
-Payments
---------
-
-The ecommerce image comes pre-configured for payments via CyberSource and PayPal. Additionally, the provisioning scripts
-add the demo course (``course-v1:edX+DemoX+Demo_Course``) to the ecommerce catalog. You can initiate a checkout by visiting
-http://localhost:18130/basket/add/?sku=8CF08E5 or clicking one of the various upgrade links in the LMS. The following
-details can be used for checkout. While the name and address fields are required for credit card payments, their values
-are not checked in development, so put whatever you want in those fields.
-
-- Card Type: Visa
-- Card Number: 4111111111111111
-- CVN: 123 (or any three digits)
-- Expiry Date: 06/2025 (or any date in the future)
-
-PayPal (same for username and password): devstack@edx.org
-
-Marketing Site
---------------
-
-Docker Compose files useful for integrating with the edx.org marketing site are
-available. This will NOT be useful to those outside of edX. For details on
-getting things up and running, see
-https://openedx.atlassian.net/wiki/display/OpenDev/Marketing+Site.
-
-How do I develop on an installed Python package?
-------------------------------------------------
-
-If you want to modify an installed package – for instance ``edx-enterprise`` or ``completion`` – clone the repository in
-``~/workspace/src/your-package``. Next, ssh into the appropriate docker container (``make lms-shell``),
-run ``pip install -e /edx/src/your-package``, and restart the service.
-
-
-How do I build images?
-----------------------
-
-There are `Docker CI Jenkins jobs`_ on tools-edx-jenkins that build and push new
-Docker images to DockerHub on code changes to either the configuration repository or the IDA's codebase. These images
-are tagged according to the branch from which they were built (see NOTES below).
-If you want to build the images on your own, the Dockerfiles are available in the ``edx/configuration`` repo.
-
-NOTES:
-
-1. edxapp and IDAs use the ``latest`` tag for configuration changes which have been merged to master branch of
-   their repository and ``edx/configuration``.
-2. Images for a named Open edX release are built from the corresponding branch
-   of each repository and tagged appropriately, for example ``hawthorn.master``
-   or ``hawthorn.rc1``.
-3. The elasticsearch used in devstack is built using elasticsearch-devstack/Dockerfile and the ``devstack`` tag.
-
-BUILD COMMANDS:
-
-.. code:: sh
-
-    git checkout master
-    git pull
-    docker build -f docker/build/edxapp/Dockerfile . -t tuannghiemtien97/edxapp:latest
-
-.. code:: sh
-
-    git checkout master
-    git pull
-    docker build -f docker/build/ecommerce/Dockerfile . -t edxops/ecommerce:devstack
-
-The build commands above will use your local configuration, but will pull
-application code from the master branch of the application's repository. If you
-would like to use code from another branch/tag/hash, modify the ``*_VERSION``
-variable that lives in the ``ansible_overrides.yml`` file beside the
-``Dockerfile``. Note that edx-platform is an exception; the variable to modify is ``edx_platform_version``
-and not ``EDXAPP_VERSION``.
-
-For example, if you wanted to build tag ``release-2017-03-03`` for the
-E-Commerce Service, you would modify ``ECOMMERCE_VERSION`` in
-``docker/build/ecommerce/ansible_overrides.yml``.
-
-How do I run the images for a named Open edX release?
------------------------------------------------------
-
-#. Set the ``OPENEDX_RELEASE`` environment variable to the appropriate image
-   tag; "hawthorn.master", "zebrawood.rc1", etc.  Note that unlike a server
-   install, ``OPENEDX_RELEASE`` should not have the "open-release/" prefix.
-#. Check out the appropriate branch in devstack, e.g. ``git checkout open-release/ironwood.master``
-#. Use ``make dev.checkout`` to check out the correct branch in the local
-   checkout of each service repository once you've set the ``OPENEDX_RELEASE``
-   environment variable above.
-#. ``make dev.pull`` to get the correct images.
-
-All ``make`` target and ``docker-compose`` calls should now use the correct
-images until you change or unset ``OPENEDX_RELEASE`` again.  To work on the
-master branches and ``latest`` images, unset ``OPENEDX_RELEASE`` or set it to
-an empty string.
-
-How do I run multiple named Open edX releases on same machine?
---------------------------------------------------------------
-You can have multiple isolated Devstacks provisioned on a single computer now. Follow these directions to switch between the named releases.
-
-#. Bring down any running containers by issuing a `make stop.all`.
-#. The ``COMPOSE_PROJECT_NAME`` variable is used to define Docker namespaced volumes and network based on this value, so changing it will give you a separate set of databases. This is handled for you automatically by setting the ``OPENEDX_RELEASE`` environment variable in ``options.mk`` (e.g. ``COMPOSE_PROJECT_NAME=devstack-juniper.master``. Should you want to manually override this edit the ``options.local.mk`` in the root of this repo and create the file if it does not exist. Change the devstack project name by adding the following line:
-   ``COMPOSE_PROJECT_NAME=<your-alternate-devstack-name>`` (e.g. ``COMPOSE_PROJECT_NAME=secondarydevstack``)
-#. Perform steps in `How do I run the images for a named Open edX release?`_ for specific release.
-#. Follow the steps in `Getting Started`_ section to update requirements (e.g. ``make requirements``) and provision (e.g. ``make dev.provision``) the new named release containers.
-
-As a specific example, if ``OPENEDX_RELEASE`` is set in your environment as ``juniper.master``, then ``COMPOSE_PROJECT_NAME`` will default to ``devstack-juniper.master`` instead of ``devstack``.
-
-The implication of this is that you can switch between isolated Devstack databases by changing the value of the ``OPENEDX_RELEASE`` environment variable.
-
-Switch between your Devstack releases by doing the following:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#. Bring down the containers by issuing a ``make stop.all`` for the running release.
-#. Follow the instructions from the `How do I run multiple named Open edX releases on same machine?`_ section.
-#. Edit the project name in ``options.local.mk`` or set the ``OPENEDX_RELEASE`` environment variable and let the ``COMPOSE_PROJECT_NAME`` be assigned automatically.
-#. Bring up the containers with ``make dev.up``.
-
-**NOTE:** Additional instructions on switching releases using `direnv` can be found in `How do I switch releases using 'direnv'?`_ section.
-
-Examples of Docker Service Names After Setting the ``COMPOSE_PROJECT_NAME`` variable. Notice that the **devstack-juniper.master** name represents the ``COMPOSE_PROJECT_NAME``.
-
--  edx.devstack-juniper.master.lms
--  edx.devstack-juniper.master.mysql
-
-Each instance has an isolated set of databases. This could, for example, be used to quickly switch between versions of Open edX without hitting as many issues with migrations, data integrity, etc.
-
-Unfortunately, this **does not** currently support running Devstacks simultaneously, because we hard-code host port numbers all over the place, and two running containers cannot share the same host port.
-
 Questions & Troubleshooting – Multiple Named Open edX Releases on Same Machine
 ------------------------------------------------------------------------------
-
-This broke my existing Devstack!
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- See if the troubleshooting of this readme can help resolve your broken devstack first, then try posting on the `Open edX forums <https://discuss.openedx.org>`__ to see if you have the same issue as any others. If you think you have found a bug, file a CR ticket.
-
-I’m getting errors related to ports already being used.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Make sure you bring down your devstack before changing the value of COMPOSE_PROJECT_NAME. If you forgot to, change the COMPOSE_PROJECT_NAME back to its original value, run ``make dev.down``, and then try again.
-
-I have custom scripts/compose files that integrate with or extend Devstack. Will those still work?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-With the default value of COMPOSE_PROJECT_NAME = devstack, they should still work. If you choose a different COMPOSE_PROJECT_NAME, your extensions will likely break, because the names of containers change along with the project name.
-
-How do I switch releases using 'direnv'?
-----------------------------------------
-
-Follow directions in `Switch between your Devstack releases by doing the following:`_ then make the following adjustments.
-
-Make sure that you have setup each Open edX release in separate directories using `How do I enable environment variables for current directory using 'direnv'?`_ instructions. Open the next release project in a separate code editor, then activate the ``direnv`` environment variables and virtual environment for the next release by using a terminal shell to traverse to the directory with the corresponding release ``.envrc`` file. You may need to issue a ``direnv allow`` command to enable the ``.envrc`` file.
-
-    .. code:: sh
-
-        # You should see something like the following after successfully enabling 'direnv' for the Juniper release.
-
-        direnv: loading ~/open-edx/devstack.juniper/.envrc
-        direnv: export +DEVSTACK_WORKSPACE +OPENEDX_RELEASE +VIRTUAL_ENV ~PATH
-        (venv)username@computer-name devstack.juniper %
-
-**NOTE:** Setting of the ``OPENEDX_RELEASE`` should have been handled within the ``.envrc`` file for named releases only and should not be defined for the ``master`` release.
-
-How do I enable environment variables for current directory using 'direnv'?
----------------------------------------------------------------------------
-We recommend separating the named releases into different directories, for clarity purposes. You can use `direnv <https://direnv.net/>`__ to define different environment variables per directory::
-
-    .. code::
-
-        # Example showing directory structure for separate Open edX releases.
-
-        /Users/<username>/open-edx – root directory for platform development
-        |_ ./devstack.master  – directory containing all repository information related to the main development release.
-        |_ ./devstack.juniper – directory containing all repository information related to the Juniper release.
-
-#. Install `direnv` using instructions on https://direnv.net/. Below you will find additional setup at the time of this writing so refer to latest of `direnv` site for additional configuration needed.
-
-#. Setup the following configuration to hook `direnv` for local directory environment overrides. There are two examples for BASH or ZSH (Mac OS X) shells.
-
-    .. code:: sh
-
-        ## ~/.bashrc for BASH shell
-
-        ## Hook in `direnv` for local directory environment overrides.
-        ## https://direnv.net/docs/hook.html
-        eval "$(direnv hook bash)"
-
-        # https://github.com/direnv/direnv/wiki/Python#bash
-        show_virtual_env() {
-        if [[ -n "$VIRTUAL_ENV" && -n "$DIRENV_DIR" ]]; then
-            echo "($(basename $VIRTUAL_ENV))"
-        fi
-        }
-        export -f show_virtual_env
-        PS1='$(show_virtual_env)'$PS1
-
-        # ---------------------------------------------------
-
-        ## ~/.zshrc for ZSH shell for Mac OS X.
-
-        ## Hook in `direnv` for local directory environment setup.
-        ## https://direnv.net/docs/hook.html
-        eval "$(direnv hook zsh)"
-
-        # https://github.com/direnv/direnv/wiki/Python#zsh
-        setopt PROMPT_SUBST
-
-        show_virtual_env() {
-        if [[ -n "$VIRTUAL_ENV" && -n "$DIRENV_DIR" ]]; then
-            echo "($(basename $VIRTUAL_ENV))"
-        fi
-        }
-        PS1='$(show_virtual_env)'$PS1
-
-#. Setup `layout_python-venv` function to be used in local project directory `.envrc` file.
-
-    .. code:: sh
-
-        ## ~/.config/direnv/direnvrc
-
-        # https://github.com/direnv/direnv/wiki/Python#venv-stdlib-module
-
-        realpath() {
-            [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
-        }
-        layout_python-venv() {
-            local python=${1:-python3}
-            [[ $# -gt 0 ]] && shift
-            unset PYTHONHOME
-            if [[ -n $VIRTUAL_ENV ]]; then
-                VIRTUAL_ENV=$(realpath "${VIRTUAL_ENV}")
-            else
-                local python_version
-                python_version=$("$python" -c "import platform; print(platform.python_version())")
-                if [[ -z $python_version ]]; then
-                    log_error "Could not detect Python version"
-                    return 1
-                fi
-                VIRTUAL_ENV=$PWD/.direnv/python-venv-$python_version
-            fi
-            export VIRTUAL_ENV
-            if [[ ! -d $VIRTUAL_ENV ]]; then
-                log_status "no venv found; creating $VIRTUAL_ENV"
-                "$python" -m venv "$VIRTUAL_ENV"
-            fi
-
-            PATH="${VIRTUAL_ENV}/bin:${PATH}"
-            export PATH
-        }
-
-#. Example `.envrc` file used in project directory. Need to make sure that each release root has this unique file.
-
-    .. code:: sh
-
-        # Open edX named release project directory root.
-        ## <project-path>/devstack.juniper/.envrc
-
-        # https://discuss.openedx.org/t/docker-devstack-multiple-releases-one-machine/1902/10
-
-        # This is handled when OPENEDX_RELEASE is set. Leaving this in for manual override.
-        # export COMPOSE_PROJECT_NAME=devstack-juniper
-
-        export DEVSTACK_WORKSPACE="$(pwd)"
-        export OPENEDX_RELEASE=juniper.master
-        export VIRTUAL_ENV="$(pwd)/devstack/venv"
-
-        # https://github.com/direnv/direnv/wiki/Python#virtualenv
-        layout python-venv
 
 How do I create relational database dumps?
 ------------------------------------------
@@ -833,66 +470,6 @@ starts, you have a few options:
   you can ``pip install -e /edx/src/edx-ora2``. If you want to keep this code
   installed across stop/starts, modify ``docker-compose.yml`` as mentioned
   above.
-
-How do I rebuild static assets?
--------------------------------
-
-Optimized static assets are built for all the Open edX services during
-provisioning, but you may want to rebuild them for a particular service
-after changing some files without re-provisioning the entire devstack.  To
-do this, run the make target for the appropriate service.  For example:
-
-.. code:: sh
-
-   make credentials-static
-
-To rebuild static assets for all service containers:
-
-.. code:: sh
-
-   make static
-
-How do I connect to the databases from an outside editor?
----------------------------------------------------------
-
-To connect to the databases from an outside editor (such as MySQLWorkbench),
-first uncomment these lines from ``docker-compose.yml``'s ``mysql`` section:
-
-.. code-block::
-
-  ports:
-    - "3506:3306"
-
-Then connect using the values below. Note that the username and password will
-vary depending on the database. For all of the options, see ``provision.sql``.
-
-- Host: ``localhost``
-- Port: ``3506``
-- Username: ``edxapp001``
-- Password: ``password``
-
-If you have trouble connecting, ensure the port was mapped successfully by
-running ``docker-compose ps`` and looking for a line like this:
-``edx.devstack.mysql docker-entrypoint.sh mysql ... Up 0.0.0.0:3506→3306/tcp``.
-
-Switching branches
-------------------
-
-You can usually switch branches on a service's repository without adverse
-effects on a running container for it.  The service in each container is
-using runserver and should automatically reload when any changes are made
-to the code on disk.  However, note the points made above regarding
-database migrations and package updates.
-
-When switching to a branch which differs greatly from the one you've been
-working on (especially if the new branch is more recent), you may wish to
-halt the existing containers via ``make down``, pull the latest Docker
-images via ``make dev.pull.<service>``, and then re-run ``make dev.provision`` or
-``make dev.sync.provision`` in order to recreate up-to-date databases,
-static assets, etc.
-
-If making a patch to a named release, you should pull and use Docker images
-which were tagged for that release.
 
 Changing LMS/CMS settings
 -------------------------
@@ -1138,116 +715,6 @@ In case you botched a migration or just want to start with a clean database.
 Troubleshooting: Common issues
 ------------------------------
 
-File ownership change
-~~~~~~~~~~~~~~~~~~~~~
-
-If you notice that the ownership of some (maybe all) files have changed and you
-need to enter your root password when editing a file, you might
-have pulled changes to the remote repository from within a container. While running
-``git pull``, git changes the owner of the files that you pull to the user that runs
-that command. Within a container, that is the root user - so git operations
-should be ran outside of the container.
-
-To fix this situation, change the owner back to yourself outside of the container by running:
-
-.. code:: sh
-
-  $ sudo chown <user>:<group> -R .
-
-Running LMS commands within a container
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Most of the ``paver`` commands require a settings flag. If omitted, the flag defaults to
-``devstack``. If you run into issues running ``paver`` commands in a docker container, you should append
-the ``devstack_docker`` flag. For example:
-
-.. code:: sh
-
-  $ paver update_assets --settings=devstack_docker
-
-Resource busy or locked
-~~~~~~~~~~~~~~~~~~~~~~~
-
-While running ``make static`` within the ecommerce container you could get an error
-saying:
-
-.. code:: sh
-
-  Error: Error: EBUSY: resource busy or locked, rmdir '/edx/app/ecommerce/ecommerce/ecommerce/static/build/'
-
-To fix this, remove the directory manually outside of the container and run the command again.
-
-No space left on device
-~~~~~~~~~~~~~~~~~~~~~~~
-
-If you see the error ``no space left on device`` on a Mac, Docker has run
-out of space in its Docker.qcow2 file.
-
-Here is an example error while running ``make dev.pull``:
-
-.. code:: sh
-
-   ...
-   32d52c166025: Extracting [==================================================>] 1.598 GB/1.598 GB
-   ERROR: failed to register layer: Error processing tar file(exit status 1): write /edx/app/edxapp/edx-platform/.git/objects/pack/pack-4ff9873be2ca8ab77d4b0b302249676a37b3cd4b.pack: no space left on device
-   make: *** [pull] Error 1
-
-Try this first to clean up dangling images:
-
-.. code:: sh
-
-   docker image prune -f  # (This is very safe, so try this first.)
-
-If you are still seeing issues, you can try cleaning up dangling volumes.
-
-**Warning**: In most cases this will only remove volumes you no longer need, but
-this is not a guarantee.
-
-.. code:: sh
-
-   docker volume prune -f  # (Be careful, this will remove your persistent data!)
-
-
-No such file or directory
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-While provisioning, some have seen the following error:
-
-.. code:: sh
-
-   ...
-   cwd = os.getcwdu()
-   OSError: [Errno 2] No such file or directory
-   make: *** [dev.provision.services] Error 1
-
-This issue can be worked around, but there's no guaranteed method to do so.
-Rebooting and restarting Docker does *not* seem to correct the issue. It
-may be an issue that is exacerbated by our use of sync (which typically speeds
-up the provisioning process on Mac), so you can try the following:
-
-.. code:: sh
-
-   # repeat the following until you get past the error.
-   make stop
-   make dev.provision
-
-Once you get past the issue, you should be able to continue to use sync versions
-of the make targets.
-
-Memory Limit
-~~~~~~~~~~~~
-
-While provisioning, some have seen the following error:
-
-.. code:: sh
-
-   ...
-   Build failed running pavelib.assets.update_assets: Subprocess return code: 137
-
-This error is an indication that your docker process died during execution.  Most likely,
-this error is due to running out of memory.  Try increasing the memory
-allocated to Docker.
-
 Docker is using lots of CPU time when it should be idle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1274,28 +741,6 @@ problem).  Make sure the set of packages installed in the container matches
 what your current code branch expects; you may need to rerun ``pip`` on a
 requirements file or pull new container images that already have the required
 package versions installed.
-
-Performance
------------
-
-Improve Mac OSX Performance with docker-sync
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Docker for Mac has known filesystem issues that significantly decrease
-performance for certain use cases, for example running tests in edx-platform. To
-improve performance, `Docker Sync`_  can be used to synchronize file data from
-the host machine to the containers.
-
-Many developers have opted not to use `Docker Sync`_ because it adds complexity
-and can sometimes lead to issues with the filesystem getting out of sync.
-
-You can swap between using Docker Sync and native volumes at any time, by using
-the make targets with or without 'sync'. However, this is harder to do quickly
-if you want to switch inside the PyCharm IDE due to its need to rebuild its
-cache of the containers' virtual environments.
-
-If you are using macOS, please follow the `Docker Sync installation
-instructions`_ before provisioning.
 
 Docker Sync Troubleshooting tips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
