@@ -123,7 +123,15 @@ All of the services can be run by following the steps below. For analyticstack, 
 
        make dev.pull
 
-9. Run the provision command
+9. Checkout branch of other repositories.
+
+   .. code:: sh
+
+       make dev.checkout
+
+If you want to install Analytics, going to Getting Started on Analytics_ section
+
+10. Run the provision command
 
    The username and password for the superusers are both ``edx``. You can access
    the services directly via Django admin at the ``/admin/`` path, or login via
@@ -135,7 +143,7 @@ All of the services can be run by following the steps below. For analyticstack, 
 
    This is expected to take a while, produce a lot of output from a bunch of steps, and finally end with ``Provisioning complete!``
 
-10. Start the services. This command will mount the repositories
+11 Start the services. This command will mount the repositories
 
    **NOTE:** it may take up to 60 seconds for the LMS to start, even after the ``make dev.up`` command outputs ``done``.
 
@@ -143,14 +151,14 @@ All of the services can be run by following the steps below. For analyticstack, 
 
        make dev.up
 
-11. Done! Setup Successfully
+12. Done! Setup Successfully
 
 Getting Started on Analytics
 ----------------------------
 
 Analyticstack can be run by following the steps below.
 
-1. Follow steps `1` to `10` from `Getting Started`_ section.
+1. Follow steps `1` to (end) `9` from `Getting Started`_ section.
 
 2. Before running the provision command, make sure to pull the relevant
    docker images from dockerhub by running the following commands:
@@ -174,7 +182,9 @@ Analyticstack can be run by following the steps below.
 
        make dev.up.analytics_pipeline
 
-5. Done! Setup Successfully
+5. Done! Setup Analytics Successfully
+
+6. Continue next step 10 from `Getting Started`_ section.
 
 Useful Commands
 ----------------------------
