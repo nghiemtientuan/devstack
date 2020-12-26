@@ -53,9 +53,9 @@ services:
         aliases:
           - edx.devstack.elasticsearch
     # TODO: What to do about these forwarded ports? They'll conflict with ports forwarded by the Vagrant VM.
-    # ports:
-    #   - "9200:9200"
-    #   - "9300:9300"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
       - elasticsearch_data:/usr/share/elasticsearch/logs
@@ -93,8 +93,8 @@ services:
       default:
         aliases:
           - edx.devstack.memcached
-    # ports:
-    #   - "11211:11211"
+    ports:
+      - "11211:11211"
 
   mongo:
     # We use WiredTiger in all environments. In development environments we use small files
@@ -108,8 +108,8 @@ services:
       default:
         aliases:
           - edx.devstack.mongo
-    # ports:
-    #  - "27017:27017"
+    ports:
+      - "27017:27017"
     volumes:
       - mongo_data:/data/db
 
@@ -125,8 +125,8 @@ services:
       default:
         aliases:
           - edx.devstack.mysql
-    # ports:
-    #    - "3506:3306"
+    ports:
+        - "3506:3306"
     volumes:
       - mysql_data:/var/lib/mysql
 
